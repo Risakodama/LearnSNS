@@ -15,21 +15,23 @@
         if ($record == false) {
           break;
       }
+
+
+
+        //つぶやき数を取得するSQL文を作成
+        $feed_sql = 'SELECT COUNT(*) AS `feed_cnt` FROM `feeds` WHERE `user_id` = ?';
+        //今回の$record['id']は　users.idです
+        $feed_data = array($record['id']);
+        //SQL文実行
+        $feed_stmt = $dbh->prepare($feed_sql);
+        $feed_stmt->execute($feed_data);
+        //つぶやき数を取得
+        $feed = $feed_stmt->fetch(PDO::FETCH_ASSOC);
+        //$feed = array('feed_cnt'=>3)
+        $record['feed_cnt'] = $feed['feed_cnt'];
+        //配列を追加代入する
         $users[] = $record;
     }
-
-    $feed_cnt_sql='SELECT COUNT(*) AS `feed_cnt` FROM `likes` WHERE `user_id` = ?'
-    $feed_cnt_data = array($users['id']);
-    $feed_cnt_stmt = $dbh->prepare($sql);
-    $feed_cnt_stmt->execute($feed_cnt_data);
-    while (true) {
-      $feed_cnt = $feed_cnt_stmt->fetch(PDO::FETCH_ASSOC);
-        if ($feed_cnt == false) {
-          break;
-      }
-        $users[] = $feed_cnt;
-    }
-
 
 
     //データ保存した配列をHTMLで表示させる
@@ -113,12 +115,12 @@
               </div>
               <div class="col-xs-11">
                 名前 <?php echo $user['name']; ?><br>
-                <a href="#" style="color: #7F7F7F;"><?php echo $user['created']; ?>からメンバー</a>
+                <a href="profile.php?user_id=<?php echo $user['id']; ?>" style="color: #7F7F7F;"><?php echo $user['created']; ?>からメンバー</a>
               </div>
             </div>
             <div class="row feed_sub">
               <div class="col-xs-12">
-                <span class="comment_count">つぶやき数 : 5</span>
+                <span class="comment_count">つぶやき数 : <?php echo $user['feed_cnt']; ?></span>
               </div>
             </div>
           </div><!-- thumbnail -->

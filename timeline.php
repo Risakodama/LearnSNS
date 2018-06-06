@@ -37,7 +37,37 @@
         $errors['feed'] = 'blank';//未入力だとエラー
      }
     }
+// -----------Pagingの処理-----------------------------
+      $page = '';//ページ番号が入る変数
+      $page_row_number = 5;//1ページあたりに表示するデータの数
 
+      if (isset($_GET['page'])) {
+        $page = $_GET['page'];
+      }else{
+        $page = 1;
+      }
+    //不正なページ番号を指定された場合のみの対処
+      //データの件数から、最大ページ数を計算する
+      $sql_count='SELECT COUNT(*) AS `cnt` FROM `feeds`';
+      $stmt_count=$dbh->prepare($sql_count);
+      $stmt_count->execute();
+
+      $record_cnt = $stmt_count->fetch(PDO::FETCH_ASSOC);
+
+      //ページ数を取得
+      $all_page_number = ceil($record_cnt['cnt'] / $page_row_number);//ceil関数
+
+      //不正に大きい数字を指定された場合、最大ページ番号に変換
+      //min関数:カンマ区切りの数字の中から最小値を取り出す関数
+      $page=min($page,$all_page_number);
+      //データを取得する開始番号を計算
+      $start = ($page -1)*$page_row_number;
+      //max関数：カンマ区切りで羅列された数字の中から、最大の数を返す
+      $page=max($page,1);
+
+
+
+//---------------------------------------------------------
     //検索ボタンが押されたら、あいまい検索
     //検索ボタンが押された＝GET送信されたserch_wordというキーのデータがある
       if (isset($_GET['search_word']) == true) {
@@ -46,7 +76,7 @@
       }else{
     //通常（検索ボタンを押していない）は全件検索
     // LEFT JOINで全件取得
-    $sql = 'SELECT f.*,u.name,u.img_name FROM feeds AS f LEFT JOIN users AS u ON f.user_id = u.id WHERE 1 ORDER BY `created` DESC';
+    $sql = "SELECT f.*,u.name,u.img_name FROM feeds AS f LEFT JOIN users AS u ON f.user_id = u.id WHERE 1 ORDER BY `created` DESC LIMIT $start,$page_row_number";
     //$sql = 'SELECT * FROM feeds';//テーブル、カラム名の``と、WHERE 1 は省略できる
       }
 
@@ -65,6 +95,28 @@
         if ($record == false) {
             break;
         }
+
+//---------------------------------------------------------
+        //commentテーブルから取得できているfeedに対してのコメントを取得
+        $comment_sql='SELECT `c`.*,`u`.`name`,`u`.`img_name` FROM `comments` AS `c` LEFT JOIN `users` AS `u` ON `c`.`user_id`=`u`.`id` WHERE `feed_id` = ?';
+        $comment_data = array($record['id']);
+        $comment_stmt = $dbh->prepare($comment_sql);
+        $comment_stmt->execute($comment_data);
+        //コメントを格納するためのarray変数
+        $comments_array = array();
+
+        while (1) {
+          $comment_record=$comment_stmt->fetch(PDO::FETCH_ASSOC);
+  
+          if ($comment_record == false) {
+            break;
+          }
+        $comments_array[] = $comment_record;
+
+        }
+        //一行分の変数(連想配列)に、新しくcommentsというキーを追加し、コメント情報を代入（!超重要!）
+        $record['comments']=$comments_array;
+
         //like数を取得するSQL文を作成
         $like_sql = 'SELECT COUNT(*) AS `like_cnt` FROM `likes` WHERE `feed_id` = ?';
         $like_data = array($record['id']);
@@ -97,11 +149,11 @@
         $feeds[] = $record;
         }
         //feed_selectがされてないときは全体表示
-        if (isset($_GET['feed_select'])) {
+        if (!isset($_GET['feed_select'])) {
         $feeds[] = $record;
         }
         //新着順が押されたとき、全件表示
-        if (isset($_GET['feed_select']) && ($_GET['feed_select'] == 'likes')) {
+        if (isset($_GET['feed_select']) && ($_GET['feed_select'] == 'news')) {
         $feeds[] = $record;
         }
 
@@ -109,7 +161,7 @@
         // $feeds[] = $record;//配列追加構文（配列への要素追加)
       //$feeds[2] = $record;//配列上書き構文（配列3番目の要素上書き)
 
-      }
+    }
 
 
       // echo "<pre>";//確認用
@@ -118,18 +170,17 @@
 
 
       // echo "<pre>";//確認用
-      // var_dump($record);
+      // var_dump($feeds['record'][]);
       // echo "</pre>";
 
       // echo "<pre>";//確認用
-      // var_dump($data);
+      // var_dump($feeds);
       // echo "</pre>";
 
 
 
  ?>
 
-              <li><a href="#">マイページ</a></li>
 
  <!DOCTYPE html>
 <html lang="ja">
@@ -141,6 +192,7 @@
   <link rel="stylesheet" type="text/css" href="assets/font-awesome/css/font-awesome.css">
   <link rel="stylesheet" type="text/css" href="assets/css/style.css">
 </head>
+
 <body style="margin-top: 60px; background: #E4E6EB;">
   <div class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -156,7 +208,7 @@
       <div class="collapse navbar-collapse" id="navbar-collapse1">
         <ul class="nav navbar-nav">
           <li class="active"><a href="#">タイムライン</a></li>
-          <li><a href="#">ユーザー一覧</a></li>
+          <li><a href="user_index.php">ユーザー一覧</a></li>
         </ul>
         <form method="GET" action="" class="navbar-form navbar-left" role="search">
           <div class="form-group">
@@ -170,6 +222,7 @@
               <?php echo $name; ?>
              <span class="caret"></span></a>
             <ul class="dropdown-menu">
+              <li><a href="profile.php?user_id=<?php echo $_SESSION['id']; ?>">マイページ</a></li>
               <li><a href="signout.php">サインアウト</a></li>
             </ul>
           </li>
@@ -240,24 +293,45 @@
                 <!-- </form> -->
                 <?php if ($feed['like_cnt'] > 0) { ?>
                 <span class="like_count">いいね数 :<?php echo $feed['like_cnt']; ?></span> <?php } ?>
-                <span class="comment_count">コメント数 : 9</span>
-                <?php
-                if ($feed['user_id'] == $_SESSION['id']) { ?>
+
+                <a href="#collapseComment<?php echo $feed['id'] ?>" data-toggle="collapse" aria-expanded="false">
+            <?php if ($feed['comment_count'] == 0){ ?>
+                  <span class="comment_count">コメント</span></a>
+            <?php }else{ ?>
+                  <span class="comment_count">コメント数 : <?php echo $feed['comment_count']; ?></span></a>
+            <?php } ?>
+
+            <?php if ($feed['user_id'] == $_SESSION['id']) { ?>
                   <a href="edit.php?feed_id=<?php echo $feed['id'] ?>" class="btn btn-success btn-xs">編集</a>
                   <a onClick="return confirm('本当に消しますか？');" href="delete.php?feed_id=<?php echo $feed['id'] ?>" class="btn btn-danger btn-xs">削除</a>
                    <?php } ?>
               </div>
+
+              <!-- コメントが押されたら表示される領域 -->
+              <!-- <div class="collapse" id="collapseComment"> -->
+              <!-- 表示の確認 -->
+              <!-- </div> -->
+              <?php include('comment_view.php'); ?>
             </div>
           </div>
           <?php } 
-      echo "<pre>";//確認用
-      var_dump($feeds);
-      echo "</pre>"; ?>
+      // echo "<pre>";//確認用
+      // var_dump($feeds);
+      // echo "</pre>"; ?>
           <!-- ここまで投稿サムネイル -->
         <div aria-label="Page navigation">
           <ul class="pager">
-            <li class="previous disabled"><a href="#"><span aria-hidden="true">&larr;</span> Older</a></li>
-            <li class="next"><a href="#">Newer <span aria-hidden="true">&rarr;</span></a></li>
+            <!-- 1ページ目で押せないようclass=disabledで設定してある -->
+            <?php if ($page == 1) {?>
+            <li class="previous disabled"><a><span aria-hidden="true">&larr;</span> Preview</a></li>
+            <?php }else{ ?>
+            <li class="previous"><a href="timeline.php?page=<?php echo $page-1; ?>"><span aria-hidden="true">&larr;</span> Preview</a></li>
+            <?php } ?>
+            <?php if ($page == $all_page_number) { ?>
+            <li class="next disabled"><a>Next <span aria-hidden="true">&rarr;</span></a></li>
+            <?php }else{ ?>
+            <li class="next"><a href="timeline.php?page=<?php echo $page+1; ?>">Next <span aria-hidden="true">&rarr;</span></a></li>
+            <?php } ?>
           </ul>
         </div>
       </div>
