@@ -44,19 +44,26 @@
 
     $followerd=array();
 
+    $follow_flag = 0;//ログインユーザーが今見ているプロフページの人をフォローしていたら１、いてなかったら０
     while (true) {
       $followerd_record = $followerd_stmt->fetch(PDO::FETCH_ASSOC);
       if ($followerd_record == false) {
         break;
       }
+
+      //フォロワーの中に、ログインしている人がいるかチェック
+      if ($followerd_record['user_id'] == $_SESSION['id']) {
+        $follow_flag = 1;
+      }
+
       $followerd[] = $followerd_record;
     }
 
-      echo "<pre>";//確認用
-      var_dump($profile_user);
-      echo "</pre>";
 
 
+      // echo "<pre>";//確認用
+      // var_dump($followerd_record);
+      // echo "</pre>";
  ?>
 
 
@@ -97,7 +104,8 @@
         </form>
         <ul class="nav navbar-nav navbar-right">
           <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><img src="" width="18" class="img-circle">test <span class="caret"></span></a>
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><img src="user_profile_img/<?php echo $profile_user['img_name']; ?>" width="18" class="img-circle"><?php echo $profile_user['name']; ?><span class="caret"></span></a>
+
             <ul class="dropdown-menu">
               <li><a href="#">マイページ</a></li>
               <li><a href="signout.php">サインアウト</a></li>
@@ -108,16 +116,19 @@
     </div>
   </nav>
 
-  <div class="container">
+  <div class="container" style="margin-bottom: 100px;">
     <div class="row">
 
       <div class="col-xs-3 text-center">
         <img src="user_profile_img/<?php echo $profile_user['img_name']; ?>" class="img-thumbnail" />
         <h2><?php echo $profile_user['name']; ?></h2>
-    <?php if ($_SESSION['id'] !== $profile_user['id']) { ?>
+      <?php if ($_SESSION['id'] != $user_id) { ?>
+        <?php if ($follow_flag == 0) { ?>
         <a href="follow.php?follower_id=<?php echo $user_id ?>"><button class="btn btn-default btn-block">フォローする</button></a>
-    <?php } ?>
-
+        <?php }else{ ?>
+        <a href="unfollow.php?follower_id=<?php echo $user_id ?>"><button class="btn btn-default btn-block">フォロー解除</button></a>
+        <?php } ?>
+      <?php } ?>
       </div>
 
       <div class="col-xs-9">
@@ -141,36 +152,15 @@
                   <img src="user_profile_img/<?php echo $followerd_user['img_name']; ?>" width="80">
                 </div>
                 <div class="col-xs-10">
-                  名前 <?php echo $followerd_user['name']; ?><br>
-                  <a href="#" style="color: #7F7F7F;"><?php echo $followerd_user['created']; ?>からメンバー</a>
+                  名前 <a href="profile.php?user_id=<?php echo $following_user['id'] ?>"><?php echo $followerd_user['name']; ?></a><br>
+                  <li style="color: #7F7F7F;"><?php echo $followerd_user['created']; ?>からメンバー</li>
                 </div>
               </div>
             </div>
     <?php } ?>
 
 
-            <div class="thumbnail">
-              <div class="row">
-                <div class="col-xs-2">
-                  <img src="http://placehold.jp/80x80.png" width="80">
-                </div>
-                <div class="col-xs-10">
-                  名前 オモえもん1<br>
-                  <a href="#" style="color: #7F7F7F;">2018-05-29 10:00:00からメンバー</a>
-                </div>
-              </div>
-            </div>
-            <div class="thumbnail">
-              <div class="row">
-                <div class="col-xs-2">
-                  <img src="http://placehold.jp/80x80.png" width="80">
-                </div>
-                <div class="col-xs-10">
-                  名前 オモえもん2<br>
-                  <a href="#" style="color: #7F7F7F;">2018-05-29 10:00:00からメンバー</a>
-                </div>
-              </div>
-            </div><!-- thumbnail -->
+
           </div>
           <div id="tab2" class="tab-pane fade">
 
@@ -182,8 +172,8 @@
                   <img src="user_profile_img/<?php echo $following_user['img_name']; ?>" width="80">
                 </div>
                 <div class="col-xs-10">
-                  名前 <?php echo $following_user['name']; ?><br>
-                  <a href="#" style="color: #7F7F7F;"><?php echo $following_user['created']; ?>からメンバー</a>
+                  名前 <a href="profile.php?user_id=<?php echo $following_user['id'] ?>"><?php echo $following_user['name']; ?></a><br>
+                  <li style="color: #7F7F7F;"><?php echo $following_user['created']; ?>からメンバー</li>
                 </div>
               </div>
             </div>

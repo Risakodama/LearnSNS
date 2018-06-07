@@ -19,7 +19,7 @@
         }elseif//パスワード文字数チェック--ここから
             (strlen($password)<4 || strlen($password)>16) {
               $errors['password'] = 'length';
-            }//パスワード文字数チェック--ここまで
+        }//パスワード文字数チェック--ここまで
 
       if ($email != "" && $password != ""){//emailをデータベースとの照合処理--ここから
           $sql = 'SELECT * FROM `users` WHERE `email`=?';

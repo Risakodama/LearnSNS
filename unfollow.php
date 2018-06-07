@@ -5,15 +5,16 @@
 //
 	$follower_id=$_GET['follower_id'];
 //
-	$user_id=$_SESSION['id'];
+	// $user_id=$_SESSION['id'];
 //DBに接続
 	require('dbconnect.php');
 
 	// if ($like_flag == 0) {
 	//SQL文(INSERT文)
-		$sql='INSERT INTO `followers` (`id`,`user_id`, `follower_id`) VALUES (NULL,?, ?)';
+		$sql = 'DELETE FROM `followers` WHERE `user_id`=? AND `follower_id`=?';
+		// $sql='INSERT INTO `followers` (`id`,`user_id`, `follower_id`) VALUES (NULL,?, ?)';
 	//SQL実行
-	    $data = array($user_id,$follower_id);
+	    $data = array($_SESSION['id'],$follower_id);
 	    $stmt = $dbh->prepare($sql);
 	    $stmt->execute($data);
 	// }else{
