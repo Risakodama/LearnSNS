@@ -1,4 +1,8 @@
 <?php
+//require('function.php');を対象サイト上部に貼り付けることで、これらの関数が使用できる
+//何故なら、下記はただ関数の定義をしているだけだから
+
+
 
 //サインインしているユーザーの情報を取得して、返す関数
 //引数$dbh:データベース接続オブジェクト
@@ -15,7 +19,13 @@ function get_signin_user($dbh,$user_id){
       return $signin_user;
 }
 
-
+	//ログイン済みかチェックし、未ログインであればログイン画面に戻す
+function check_signin($user_id){
+	if(!isset($_SESSION['id']))
+      header('location:signin.php');
+      exit();//下の処理を実行せずに、
+  }
+}
 
 
 

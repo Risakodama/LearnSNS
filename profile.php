@@ -1,10 +1,16 @@
 <?php
 
     session_start();
-    require('dbconnect.php');
-    require('function.php');
+    require('dbconnect.php');//処理を実行している
+    require('function.php');//こういう関数があるよ程度で、処理は実行していない
     $signin_user = get_signin_user($dbh,$_SESSION['id']);
 
+//ログイン済みかチェックをし、未ログインであれば、ログイン画面に戻すバリデーション--------
+    // if (!isset($_SESSION['id'])) {
+    //   header('location:signin.php');
+    //   exit();//下の処理を実行せずに、このタイミングで処理を終了する
+    // }
+    check_signin($_SESSION['id']);
 
 
 //user_idの取得----------------------------------------
