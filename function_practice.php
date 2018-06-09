@@ -78,14 +78,54 @@ echo $aisatu;
 演習問題１<br>
 ２つの値を乗算して出力する関数「multiplication」関数を作成し、呼び出して結果を出力してください。<br>
 
+<?php
+function multiplication($num1, $num2) {
+    return 'result = ' . $num1 * $num2;
+}
 
+echo multiplication(5, 6);
 
+ ?><br>
 
 演習問題２<br>
 ２つの値の平均値を計算し、10以上だったら平均値を、9以下だったら「0」を返す関数「average」関数を作成し、呼び出して結果を出力してください。<br>
+<?php 
 
+function average($num3,$num4){
+	$average= ($num3 + $num4)/2;
+	if ($average>9) {
+		return '平均は'. $average . 'です';
+	}else{
+		return '平均は0です';
+	}
+}
+
+echo average(10,10);
+ ?><br>
 
 
 演習問題３<br>
 所持金と購入した物の値段を渡すと、余ったお金を計算して返す関数「shopping」を作成し、呼び出して結果を出力してください。<br>
+<?php
+function shopping($shojikin,$price){
+	return $shojikin-$price;
+}
+echo shopping(1000,100);
 
+ ?><br>
+
+
+演習問題４<br>
+以下のコードがどのような処理をしているのかを把握し、関数を使ってスマートに書き換えてください。<br>
+<?php
+function larger($num1,$num2){
+	if ($num1 >= $num2) {
+		return $num1;
+	}else{
+		return $num2;
+	}
+}
+
+echo larger(10,20);
+
+ ?>
